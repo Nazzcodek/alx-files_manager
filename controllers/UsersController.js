@@ -1,9 +1,9 @@
-import { ObjectId } from 'mongodb';
+// import { ObjectId } from 'mongodb';
 import crypto from 'crypto';
 import getDbClient from '../utils/db';
 
 const postNew = async (req, res) => {
-  const { email, password } = req.body;	
+  const { email, password } = req.body;
   const dbClient = await getDbClient();
 
   if (!email) {
@@ -36,7 +36,7 @@ const postNew = async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
-
+/*
 const getMe = async (req, res) => {
   try {
     const user = await getUserFromToken(req.headers['x-token']);
@@ -51,5 +51,5 @@ const getMe = async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
-
-module.exports = { postNew, getMe };
+*/
+module.exports = postNew;
