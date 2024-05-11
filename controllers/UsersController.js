@@ -1,4 +1,4 @@
-// import { ObjectId } from 'mongodb';
+// const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const dbClient = require('../utils/db');
 
@@ -35,22 +35,24 @@ const postNew = async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
-/*
+
 const getMe = async (req, res) => {
   try {
-    const user = await getUserFromToken(req.headers['x-token']);
+    const token = req.header['X-Token'];
+    const user = await token;
     if (!user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { _id, email } = user;
-    return res.status(200).json({ id: _id, email });
+    const { id, email } = user;
+    return res.status(200).json({ id, email });
   } catch (error) {
     console.error('Error retrieving user:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 };
-*/
+
 module.exports = {
   postNew,
+  getMe,
 };
