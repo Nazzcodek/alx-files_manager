@@ -1,10 +1,10 @@
 // import { ObjectId } from 'mongodb';
-import crypto from 'crypto';
-import getDbClient from '../utils/db';
+const crypto = require('crypto');
+const dbClient = require('../utils/db');
 
 const postNew = async (req, res) => {
   const { email, password } = req.body;
-  const dbClient = await getDbClient();
+  const dbClient = await dbClient();
 
   if (!email) {
     return res.status(400).json({ error: 'Missing email' });
@@ -15,7 +15,7 @@ const postNew = async (req, res) => {
   }
 
   try {
-    const existingUser = await dbClient.userCollection.findOne({ email });
+    const existingUser = await dbClient.usersCollection.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ error: 'Already exist' });
     }
@@ -23,7 +23,7 @@ const postNew = async (req, res) => {
     const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
     const newUser = { email, password: hashedPassword };
 
-    const result = await dbClient.userCollection.insertOne(newUser);
+    const result = await dbClient.usersCollection.insertOne(newUser);
 
     const createdUser = {
       id: result.insertedId,
@@ -52,4 +52,6 @@ const getMe = async (req, res) => {
   }
 };
 */
-module.exports = postNew;
+module.exports = {
+  postNew,
+};
