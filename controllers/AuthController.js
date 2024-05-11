@@ -6,9 +6,9 @@ const redisClient = require('../utils/redis');
 class AuthController {
   static async getConnect(req, res) {
     const authHeader = req.header('Authorization');
-      if (!authHeader) {
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
+    if (!authHeader) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     const [email, password] = Buffer.from(authHeader.split(' ')[1], 'base64').toString('ascii').split(':');
 
@@ -23,7 +23,7 @@ class AuthController {
     }
 
     const token = uuid4();
-    await redisClient.set(`auth_${token}`, user.id.toString(), 'EX', 86400);
+    await redisClient.set(`auth_${token}`, user._id.toString(), 'EX', 86400);
     return res.status(200).json({ token });
   }
 

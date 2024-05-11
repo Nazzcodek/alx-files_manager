@@ -1,7 +1,7 @@
 const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const dbClient = require('../utils/db');
-const redis = require('../utils/redis');
+const redisClient = require('../utils/redis');
 
 const postNew = async (req, res) => {
   const { email, password } = req.body;
@@ -39,12 +39,12 @@ const postNew = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const token = req.headers['X-Token'];
+    const token = req.header('X-Token');
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const userId = await redis.redisClient.get(`auth_${token}`);
+    const userId = await redisClient.get(`auth_${token}`);
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
