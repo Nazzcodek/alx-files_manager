@@ -1,19 +1,20 @@
-const sha1 = require('sha1');
+const crypto = require('crypto');
 const { v4: uuid4 } = require('uuid');
 const dbClient = require('../utils/db');
 const redis = require('../utils/redis');
 
 class AuthController {
   static async getConnect(req, res) {
-    const authHeader = req.headers.authorization.split(' ')[1];
+    const authHeader = req.headers['Authorization'].split(' ')[1];
     const [email, password] = Buffer.from(authHeader, 'base64').toString('ascii').split(':');
 
     if (!email || !password) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const user = await dbClient.usersCollection.findOne({ email, password: sha1(password) });
-    if (!user || user.password !== sha1(password)) {
+    const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
+    const user = await dbClient.usersCollection.findOne({ email, password: hashedPassword });
+    if (!user || user.password !== hashedPassword) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 

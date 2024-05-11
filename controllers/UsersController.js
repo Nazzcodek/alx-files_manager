@@ -1,6 +1,7 @@
-// const { ObjectId } = require('mongodb');
+const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const dbClient = require('../utils/db');
+const redis = require('../utils/redis');
 
 const postNew = async (req, res) => {
   const { email, password } = req.body;
@@ -38,14 +39,21 @@ const postNew = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const token = req.header['X-Token'];
-    const user = await token;
-    if (!user) {
+    const token = req.headers['X-Token'];
+    if (!token) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const { id, email } = user;
-    return res.status(200).json({ id, email });
+    const userId = await redis.redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userIdObj = new ObjectId(userId);
+    const user = await dbClient.usersCollection.findOne({ _id: userIdObj });
+
+    if (user) return res.status(200).json({ id: userId, email: user.email });
+    return res.status(401).json({ error: 'Unauthorized' });
   } catch (error) {
     console.error('Error retrieving user:', error);
     return res.status(500).json({ error: 'Internal server error' });
