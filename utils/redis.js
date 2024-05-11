@@ -16,11 +16,11 @@ class RedisClient {
     });
   }
 
-  isAlive() {
+  static isAlive() {
     return client.connected;
   }
 
-  async get(key) {
+  static async get(key) {
     try {
       const value = await getAsync(key);
       return value;
@@ -30,7 +30,7 @@ class RedisClient {
     }
   }
 
-  async set(key, value, duration) {
+  static async set(key, value, duration) {
     try {
       await setAsync(key, duration, value);
     } catch (error) {
@@ -39,7 +39,7 @@ class RedisClient {
     }
   }
 
-  async del(key) {
+  static async del(key) {
     try {
       await delAsync(key);
     } catch (error) {
