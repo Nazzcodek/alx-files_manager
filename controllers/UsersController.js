@@ -1,6 +1,6 @@
-const { ObjectId } = require('mongodb');
-const crypto = require('crypto');
-const getDbClient = require('../utils/db');
+import { ObjectId } from 'mongodb';
+import crypto from 'crypto';
+import getDbClient from '../utils/db';
 
 const postNew = async (req, res) => {
   const { email, password } = req.body;	
