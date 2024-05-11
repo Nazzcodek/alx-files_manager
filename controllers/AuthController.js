@@ -5,7 +5,7 @@ const redis = require('../utils/redis');
 
 class AuthController {
   static async getConnect(req, res) {
-    const authHeader = req.headers['Authorization'].split(' ')[1];
+    const authHeader = req.header('Authorization').split(' ')[1];
     const [email, password] = Buffer.from(authHeader, 'base64').toString('ascii').split(':');
 
     if (!email || !password) {
