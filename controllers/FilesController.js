@@ -7,7 +7,7 @@ const dbClient = require('../utils/db');
 
 class FileController {
   static async postUpload(req, res) {
-    const token = req.header('X-Token')
+    const token = req.header('X-Token');
     if (!token) {
       return res.status(401).json({ error: 'Unathourized' });
     }
@@ -18,30 +18,30 @@ class FileController {
     }
 
     const {
-      name, type, isPublic, data
+      name, type, isPublic, data,
     } = req.body;
-    let parentId = req.body.parantId || '0'
+    const parentId = req.body.parantId || '0';
 
     if (!name) {
       return res.status(400).json({ error: 'Missing name' });
     }
-    if (!type || ![folder, file, image].includes(type)) {
+    if (!type || !['folder', 'file', 'image'].includes(type)) {
       return res.status(400).json({ error: 'Missing type' });
     }
     if (!data && type !== 'folder') {
       return res.status(400).json({ error: 'Missing data' });
     }
 
-    if (parentId !== '0'){
+    if (parentId !== '0') {
       const file = await dbClient.filesCollection.findOne({ _id: ObjectId(parentId) });
       if (!file) return res.status(400).json({ error: 'Parent not found' });
       if (file.type !== 'folder') return res.status(400).json({ error: 'Parent is not a folder' });
     }
 
-    const fileId = uuidv4();
+    const fileId = uuid4();
 
     const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
-    const localPath = path.join(folderPath, `${fileId}.${type === 'file' || type === 'image'? 'bin' : ''}${type}`);
+    const localPath = path.join(folderPath, `${fileId}.${type === 'file' || type === 'image' ? 'bin' : ''}${type}`);
 
     fs.writeFileSync(localPath, Buffer.from(data, 'base64'));
 
@@ -49,13 +49,13 @@ class FileController {
       userId: ObjectId(userToken),
       name,
       type,
-      isPublic:!!isPublic,
+      isPublic: !!isPublic,
       parentId: parentId || 0,
       localPath,
     };
 
     const result = await dbClient.filesCollection.insertOne(newFile);
-    res.status(201).json(result.ops[0]);
+    return res.status(201).json(result.ops[0]);
   }
 }
 
