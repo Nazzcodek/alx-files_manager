@@ -2,6 +2,7 @@ const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 const dbClient = require('../utils/db');
 const redisClient = require('../utils/redis');
+const userQueue = require('../worker');
 
 const postNew = async (req, res) => {
   const { email, password } = req.body;
@@ -29,7 +30,7 @@ const postNew = async (req, res) => {
       id: result.insertedId,
       email,
     };
-
+    userQueue.add({ userId: result.insertedId });
     return res.status(201).json(createdUser);
   } catch (error) {
     console.error('Error creating new user:', error);

@@ -5,6 +5,7 @@ const { ObjectId } = require('mongodb');
 const mime = require('mime-types');
 const redisClient = require('../utils/redis');
 const dbClient = require('../utils/db');
+const fileQueue = require('../worker');
 
 class FileController {
   static async postUpload(req, res) {
@@ -64,6 +65,10 @@ class FileController {
     await fs.promises.writeFile(localPath, Buffer.from(data, 'base64'));
 
     const newFile = await dbClient.filesCollection.insertOne({ localPath, ...folderData });
+
+    if (type === 'image') {
+      fileQueue.add({ fileId: newFile.insertedId, userId });
+    }
 
     folderData.parentId = parentId === '0' ? 0 : ObjectId(parentId);
     return res.status(201).json({ id: newFile.insertedId, localPath, ...folderData });
@@ -203,7 +208,7 @@ class FileController {
       return res.status(400).json({ error: 'A folder doesn\'t have content' });
     }
 
-    const { localPath } = file;
+    let { localPath } = file;
     const { size } = req.query;
 
     if (size) localPath = `${localPath}_${size}`;
