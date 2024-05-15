@@ -67,6 +67,52 @@ class FileController {
     folderData.parentId = parentId === '0' ? 0 : ObjectId(parentId);
     return res.status(201).json({ id: newFile.insertedId, localPath, ...folderData });
   }
+
+  static async getShow(req, res) {
+    const token = req.header('X-Token');
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const fileId = req.params.id;
+    const file = await dbClient.filesCollection.findOne({ _id: ObjectId(fileId) });
+    if (!file) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    if (file.userId.toString() !== userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    return res.status(200).json({ id: file._id, ...file });
+  }
+
+  static async getIndex(req, res) {
+    const token = req.header('X-Token');
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const parentId = req.query.parentId || '0';
+    if (parentId !== '0') {
+      const parentFile = await dbClient.filesCollection.findOne({ _id: ObjectId(parentId) });
+      if (!parentFile) return res.status(400).json({ error: 'Parent not found' });
+      if (parentFile.type !== 'folder') return res.status(400).json({ error: 'Parent is not a folder' });
+    }
+
+    const files = await dbClient.filesCollection.find({ userId: ObjectId(userId), parentId: parentId === '0' ? 0 : ObjectId(parentId) }).toArray();
+    return res.status(200).json(files);
+  }
 }
 
 module.exports = FileController;
