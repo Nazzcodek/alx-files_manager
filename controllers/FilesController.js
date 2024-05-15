@@ -34,7 +34,7 @@ class FileController {
     }
 
     if (parentId !== '0') {
-      const parentFile = await dbClient.dbClient.collection('files').findOne({ _id: ObjectId(parentId) });
+      const parentFile = await dbClient.filesCollection.findOne({ _id: ObjectId(parentId) });
       if (!parentFile) return res.status(400).json({ error: 'Parent not found' });
       if (parentFile.type !== 'folder') return res.status(400).json({ error: 'Parent is not a folder' });
     }
@@ -48,7 +48,7 @@ class FileController {
     };
 
     if (type === 'folder') {
-      const newFolder = await dbClient.dbClient.collection('files').insertOne({
+      const newFolder = await dbClient.filesCollection.insertOne({
         userId, name, type, isPublic: isPublic || false, parentId,
       });
       folderData.parentId = parentId === '0' ? 0 : ObjectId(parentId);
