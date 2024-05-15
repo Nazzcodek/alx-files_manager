@@ -110,7 +110,13 @@ class FileController {
       if (parentFile.type !== 'folder') return res.status(400).json({ error: 'Parent is not a folder' });
     }
 
-    const files = await dbClient.filesCollection.find({ userId: ObjectId(userId), parentId: parentId === '0' ? 0 : ObjectId(parentId) }).toArray();
+    const page = parseInt(req.query.page, 10) || 0;
+    const filesPerPage = 20;
+    const files = await dbClient.filesCollection.find({ userId: ObjectId(userId), parentId: parentId === '0' ? 0 : ObjectId(parentId) })
+      .skip(page * filesPerPage)
+      .limit(filesPerPage)
+      .toArray();
+
     return res.status(200).json(files);
   }
 }
