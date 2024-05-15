@@ -2,6 +2,7 @@ const fs = require('fs');
 const { v4: uuid4 } = require('uuid');
 const path = require('path');
 const { ObjectId } = require('mongodb');
+const mime = require('mime-types');
 const redisClient = require('../utils/redis');
 const dbClient = require('../utils/db');
 
@@ -97,17 +98,16 @@ class FileController {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const userId = await redisClient.get(`auth_${token}`);
-    if (!userId) {
+    const stringUserId = await redisClient.get(`auth_${token}`);
+    if (!stringUserId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const parentId = req.query.parentId || '0';
-    if (parentId !== '0') {
-      const parentFile = await dbClient.filesCollection.findOne({ _id: ObjectId(parentId) });
-      if (!parentFile) return res.status(400).json({ error: 'Parent not found' });
-      if (parentFile.type !== 'folder') return res.status(400).json({ error: 'Parent is not a folder' });
-    }
+    const parentId = req.query.parentId ? ObjectId(req.query.parentId) : '0';
+    const userId = ObjectId(stringUserId);
+    const filesCount = await dbClient.nbFiles({ userId, parentId });
+
+    if (filesCount === '0') return res.json([]);
 
     const page = parseInt(req.query.page, 10) || 0;
     const filesPerPage = 20;
@@ -179,6 +179,41 @@ class FileController {
       { $set: { isPublic: false } });
 
     return res.status(200).json({ id: fileId, isPublic: false });
+  }
+
+  static async getFile(req, res) {
+    const token = req.header('X-Token');
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const userId = await redisClient.get(`auth_${token}`);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const fileId = req.params.id;
+    const file = await dbClient.filesCollection.findOne({ _id: ObjectId(fileId) });
+    const stringUserId = file.userId.toString();
+    if (!file || (!file.isPublic && (!userId || userId !== stringUserId))) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    if (file.type === 'folder') {
+      return res.status(400).json({ error: 'A folder doesn\'t have content' });
+    }
+
+    const { localPath } = file;
+    const { size } = req.query;
+
+    if (size) localPath = `${localPath}_${size}`;
+
+    if (!fs.existsSync(localPath)) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    res.setHeader('Content-Type', mime.lookup(file.name));
+    return res.sendFile(localPath);
   }
 }
 

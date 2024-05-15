@@ -29,8 +29,8 @@ class DBClient {
     return numberOfUsers;
   }
 
-  async nbFiles() {
-    const numberOfFiles = this.filesCollection.countDocuments();
+  async nbFiles(filter = {}) {
+    const numberOfFiles = this.filesCollection.countDocuments(filter);
     return numberOfFiles;
   }
 }
