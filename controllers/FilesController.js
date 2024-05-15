@@ -80,16 +80,12 @@ class FileController {
     }
 
     const fileId = req.params.id;
-    const file = await dbClient.filesCollection.findOne({ _id: ObjectId(fileId) });
+    const file = await dbClient.filesCollection.findOne({ _id: ObjectId(fileId), userId: ObjectId(userId) });
     if (!file) {
       return res.status(404).json({ error: 'Not found' });
     }
 
-    if (file.userId.toString() !== userId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    return res.status(200).json({ id: file._id, ...file });
+    return res.status(200).json(file);
   }
 
   static async getIndex(req, res) {
@@ -117,7 +113,16 @@ class FileController {
       .limit(filesPerPage)
       .toArray();
 
-    return res.status(200).json(files);
+    const transformedFiles = files.map((file) => ({
+      id: file._id.toString(),
+      userId: file.userId.toString(),
+      name: file.name,
+      type: file.type,
+      isPublic: file.isPublic,
+      parentId: file.parentId === 0 ? 0 : file.parentId.toString(),
+    }));
+
+    return res.status(200).json(transformedFiles);
   }
 }
 
